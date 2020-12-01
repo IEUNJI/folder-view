@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Folder View</title>
+  <link rel="stylesheet" href="https://unpkg.com/element-ui@2.14.1/lib/theme-chalk/index.css">
+  <style>
+    #app {
+      margin: auto 25vw;
+      min-width: 200px;
+    }
+
+    .btnCenterWrapper {
+      display: flex;
+      justify-content: center;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <div class="btnCenterWrapper" v-if="!treeVisible">
+      <el-button type="primary" icon="el-icon-folder-opened" :loading="btnLoading" @click="btnClickHandler">
+        打开文件夹
+      </el-button>
+    </div>
+    <el-tree v-if="treeVisible" lazy :props="treeProps" :load="treeLoadHandler"></el-tree>
+  </div>
+  <script src="https://unpkg.com/vue@2.6.11/dist/vue.min.js"></script>
+  <script src="https://unpkg.com/element-ui@2.14.1/lib/index.js"></script>
+  <script>
+    new Vue({
+      el: '#app',
+      data: {
+        btnLoading: false,
+        treeVisible: false,
+        treeProps: {
+          label: 'name',
+          isLeaf: 'isLeaf'
+        },
+        rootHandle: null
+      },
+      methods: {
+        async btnClickHandler() {
+          this.btnLoading = true;
+          this.rootHandle = await window.showDirectoryPicker();
+          this.treeVisible = true;
+        },
+        async treeLoadHandler(node, resolve) {
+          if (node.level === 0) {
+            return resolve([{
+              name: this.rootHandle.name,
+              isLeaf: this.rootHandle.kind === 'file',
+              handle: this.rootHandle
+            }]);
+          }
+
+          if (node.level > 0) {
+            const children = [];
+            for await (const handle of node.data.handle.values()) {
+              children.push({
+                name: handle.name,
+                isLeaf: handle.kind === 'file',
+                handle
+              });
+            }
+            return resolve(children);
+          }
+        }
+      }
+    });
+  </script>
+</body>
+
+</html>
