@@ -16,6 +16,11 @@
       display: flex;
       justify-content: center;
     }
+
+    object {
+      width: 100%;
+      height: 100%;
+    }
   </style>
 </head>
 
@@ -26,7 +31,10 @@
         打开文件夹
       </el-button>
     </div>
-    <el-tree v-if="treeVisible" lazy :props="treeProps" :load="treeLoadHandler"></el-tree>
+    <el-tree v-if="treeVisible" lazy :props="treeProps" :load="treeLoadHandler" @current-change="treeSelectHandler"></el-tree>
+    <el-drawer size="50%" :withHeader="false" :show-close="false" :destroy-on-close="true" :visible.sync="drawerVisible" @closed="drawerClosedHandler">
+      <object :data="objectURL" :type="objectType"></object>
+    </el-drawer>
   </div>
   <script src="https://unpkg.com/vue@2.6.11/dist/vue.min.js"></script>
   <script src="https://unpkg.com/element-ui@2.14.1/lib/index.js"></script>
@@ -36,10 +44,13 @@
       data: {
         btnLoading: false,
         treeVisible: false,
+        drawerVisible: false,
         treeProps: {
           label: 'name',
           isLeaf: 'isLeaf'
         },
+        objectURL: '',
+        objectType: '',
         rootHandle: null
       },
       methods: {
@@ -68,6 +79,20 @@
             }
             return resolve(children);
           }
+        },
+        async treeSelectHandler(data) {
+          const { isLeaf, handle } = data;
+          if (!isLeaf) return;
+          const file = await handle.getFile();
+          const { type } = file;
+          this.objectURL = URL.createObjectURL(file);
+          this.objectType = type;
+          this.drawerVisible = true;
+        },
+        drawerClosedHandler() {
+          URL.revokeObjectURL(this.objectURL);
+          this.objectURL = '';
+          this.objectType = '';
         }
       }
     });
