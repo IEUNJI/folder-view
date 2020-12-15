@@ -4,95 +4,215 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Folder View</title>
-  <link rel="stylesheet" href="https://unpkg.com/element-ui@2.14.1/lib/theme-chalk/index.css">
+  <title>Explorer</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@4.x/css/materialdesignicons.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css">
   <style>
-    #app {
-      margin: auto 25vw;
-      min-width: 200px;
+    html {
+      overflow-y: auto;
     }
 
-    .btnCenterWrapper {
-      display: flex;
-      justify-content: center;
+    .app-title {
+      font-size: x-large;
+      user-select: none;
+    }
+
+    .app-tips {
+      text-align: center;
+    }
+
+    .app-main-container {
+      height: 100%;
     }
 
     object {
       width: 100%;
       height: 100%;
     }
+
+    .app-footer {
+      font-size: medium;
+    }
+
+    .app-footer span {
+      padding-right: 16px;
+    }
   </style>
 </head>
 
 <body>
   <div id="app">
-    <div class="btnCenterWrapper" v-if="!treeVisible">
-      <el-button type="primary" icon="el-icon-folder-opened" :loading="btnLoading" @click="btnClickHandler">
-        打开文件夹
-      </el-button>
-    </div>
-    <el-tree v-if="treeVisible" lazy :props="treeProps" :load="treeLoadHandler" @current-change="treeSelectHandler"></el-tree>
-    <el-drawer size="50%" :withHeader="false" :show-close="false" :destroy-on-close="true" :visible.sync="drawerVisible" @closed="drawerClosedHandler">
-      <object :data="objectURL" :type="objectType"></object>
-    </el-drawer>
+    <v-app>
+      <v-app-bar app dark clipped-left color="indigo">
+        <v-toolbar-title>
+          <h1 class="app-title">Explorer</h1>
+        </v-toolbar-title>
+        <v-spacer></v-spacer>
+      </v-app-bar>
+      <v-navigation-drawer app dark clipped permanent width="400px" color="grey lighten-5">
+        <v-container v-if="!treeVisible" fluid>
+          <p class="app-tips">尚未打开文件夹</p>
+          <v-btn dark block tile outlined color="indigo" :loading="btnLoading" @click="btnClickHandler">打开文件夹</v-btn>
+        </v-container>
+        <v-treeview v-else light dense hoverable activatable open-on-click transition return-object color="indigo"
+          :items="treeItems" :load-children="treeLoadHandler" @update:active="treeSelectHandler">
+          <template v-slot:prepend="{ item, open }">
+            <v-icon v-if="!item.type">
+              {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
+            </v-icon>
+            <v-icon v-else>
+              {{ fileTypeEnum[item.type] }}
+            </v-icon>
+          </template>
+        </v-treeview>
+      </v-navigation-drawer>
+      <v-main>
+        <v-container fluid class="app-main-container">
+          <object :data="objectURL" :type="objectType"></object>
+        </v-container>
+      </v-main>
+      <v-footer app dark color="indigo" height="42px">
+        <v-toolbar-title>
+          <span class="app-footer">
+            <span v-show="fileName">名称：{{ fileName }}</span>
+            <span v-show="fileSize">大小：{{ fileSize }}</span>
+            <span v-show="fileLastModifiedDate">修改日期：{{ fileLastModifiedDate }}</span>
+          </span>
+        </v-toolbar-title>
+      </v-footer>
+    </v-app>
   </div>
-  <script src="https://unpkg.com/vue@2.6.11/dist/vue.min.js"></script>
-  <script src="https://unpkg.com/element-ui@2.14.1/lib/index.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.js"></script>
   <script>
     new Vue({
       el: '#app',
+      vuetify: new Vuetify(),
       data: {
-        btnLoading: false,
         treeVisible: false,
-        drawerVisible: false,
-        treeProps: {
-          label: 'name',
-          isLeaf: 'isLeaf'
+        btnLoading: false,
+        treeItems: [],
+        fileTypeEnum: {
+          'txt': 'mdi-file-document-outline',
+          'html': 'mdi-language-html5',
+          'css': 'mdi-language-css3',
+          'js': 'mdi-nodejs',
+          'json': 'mdi-json',
+          'md': 'mdi-markdown',
+          'png': 'mdi-file-image',
+          'gif': 'mdi-gif',
+          'pdf': 'mdi-file-pdf'
         },
         objectURL: '',
         objectType: '',
-        rootHandle: null
+        fileName: '',
+        fileSize: '',
+        fileLastModifiedDate: ''
       },
       methods: {
-        async btnClickHandler() {
+        btnClickHandler() {
           this.btnLoading = true;
-          this.rootHandle = await window.showDirectoryPicker();
-          this.treeVisible = true;
-        },
-        async treeLoadHandler(node, resolve) {
-          if (node.level === 0) {
-            return resolve([{
-              name: this.rootHandle.name,
-              isLeaf: this.rootHandle.kind === 'file',
-              handle: this.rootHandle
-            }]);
-          }
-
-          if (node.level > 0) {
-            const children = [];
-            for await (const handle of node.data.handle.values()) {
-              children.push({
+          showDirectoryPicker()
+            .then(handle => {
+              this.treeItems.push({
+                id: Math.random(),
                 name: handle.name,
-                isLeaf: handle.kind === 'file',
+                children: [],
                 handle
               });
-            }
-            return resolve(children);
-          }
+              this.treeVisible = true;
+            })
+            .catch(() => {
+
+            })
+            .finally(() => {
+              this.btnLoading = false;
+            });
         },
-        async treeSelectHandler(data) {
-          const { isLeaf, handle } = data;
-          if (!isLeaf) return;
-          const file = await handle.getFile();
-          const { type } = file;
+        treeLoadHandler(item) {
+          return new Promise(async (resolve, reject) => {
+            for await (const handle of item.handle.values()) {
+              const child = {
+                id: Math.random(),
+                name: handle.name,
+                handle
+              };
+              if (handle.kind === 'directory') {
+                child.children = [];
+              } else {
+                child.type = this.getFileType(handle.name);
+              }
+              item.children.push(child);
+            }
+            resolve();
+          });
+        },
+        getFileType(name) {
+          let type = 'txt';
+          if (!name.includes('.')) return type;
+          const extName = name.split('.').pop().toLowerCase();
+          switch (extName) {
+            case 'html':
+              type = 'html';
+              break;
+            case 'css':
+            case 'less':
+              type = 'css';
+              break;
+            case 'js':
+            case 'jsx':
+              type = 'js';
+              break;
+            case 'json':
+              type = 'json';
+              break;
+            case 'md':
+              type = 'md';
+              break;
+            case 'png':
+            case 'jpg':
+              type = 'png';
+              break;
+            case 'gif':
+              type = 'gif';
+              break;
+            case 'pdf':
+            case 'ofd':
+              type = 'pdf';
+              break;
+          }
+          return type;
+        },
+        async treeSelectHandler(selectedItems) {
+          this.cleanObjectCache();
+          const firstItem = selectedItems[0];
+          if (!firstItem) return;
+          const file = await firstItem.handle.getFile();
+          const { type, name, size, lastModifiedDate } = file;
           this.objectURL = URL.createObjectURL(file);
           this.objectType = type;
-          this.drawerVisible = true;
+          this.fileName = name;
+          this.fileSize = this.getFileSize(size);
+          this.fileLastModifiedDate = lastModifiedDate.toLocaleString();
         },
-        drawerClosedHandler() {
+        cleanObjectCache() {
           URL.revokeObjectURL(this.objectURL);
           this.objectURL = '';
           this.objectType = '';
+          this.fileName = '';
+          this.fileSize = '';
+          this.fileLastModifiedDate = '';
+        },
+        getFileSize(size) {
+          if (size < 1024) {
+            return `${size} B`;
+          }
+          if (size < 1024 * 1024) {
+            return `${Math.floor(size / 1024)} KB`;
+          }
+          return `${Math.floor(size / (1024 * 1024))} MB`;
         }
       }
     });
