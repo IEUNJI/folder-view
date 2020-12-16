@@ -110,7 +110,10 @@
           'sass': 'mdi-sass',
           'js': 'mdi-nodejs',
           'ts': 'mdi-language-typescript',
-          'jsx': 'mdi-react',
+          'react': 'mdi-react',
+          'vue': 'mdi-vuejs',
+          'java': 'mdi-language-java',
+          'python': 'mdi-language-python',
 
           'json': 'mdi-json',
           'md': 'mdi-markdown',
@@ -223,7 +226,17 @@
               break;
             case 'jsx':
             case 'tsx':
-              type = 'jsx';
+              type = 'react';
+              break;
+            case 'vue':
+              type = 'vue';
+              break;
+            case 'java':
+            case 'jar':
+              type = 'java';
+              break;
+            case 'py':
+              type = 'python';
               break;
 
             case 'json':
