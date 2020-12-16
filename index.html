@@ -19,6 +19,7 @@
     }
 
     .app-tips {
+      font-size: 0.875rem;
       text-align: center;
     }
 
@@ -95,15 +96,34 @@
         btnLoading: false,
         treeItems: [],
         fileTypeEnum: {
-          'txt': 'mdi-file-document-outline',
+          'file': 'mdi-file-outline',
+          'document': 'mdi-file-document-outline',
+          'word': 'mdi-file-word-outline',
+          'powerpoint': 'mdi-file-powerpoint-outline',
+          'excel': 'mdi-file-excel-outline',
+          'pdf': 'mdi-file-pdf',
+          'zip': 'mdi-folder-zip-outline',
+
           'html': 'mdi-language-html5',
+          'xml': 'mdi-xml',
           'css': 'mdi-language-css3',
+          'sass': 'mdi-sass',
           'js': 'mdi-nodejs',
+          'ts': 'mdi-language-typescript',
+          'jsx': 'mdi-react',
+
           'json': 'mdi-json',
           'md': 'mdi-markdown',
+          'npm': 'mdi-npm',
+          'webpack': 'mdi-webpack',
+          'babel': 'mdi-babel',
+          'git': 'mdi-git',
+          'eslint': 'mdi-eslint',
+
           'png': 'mdi-file-image',
           'gif': 'mdi-gif',
-          'pdf': 'mdi-file-pdf'
+          'font': 'mdi-format-text-variant',
+          'video': 'mdi-file-video-outline',
         },
         objectURL: '',
         objectType: '',
@@ -150,37 +170,105 @@
           });
         },
         getFileType(name) {
-          let type = 'txt';
+          let type = 'file';
           if (!name.includes('.')) return type;
-          const extName = name.split('.').pop().toLowerCase();
+          name = name.toLowerCase();
+          const extName = name.split('.').pop();
           switch (extName) {
+            case 'txt':
+              type = 'document';
+              break;
+            case 'doc':
+            case 'docx':
+              type = 'word';
+              break;
+            case 'ppt':
+            case 'pptx':
+              type = 'powerpoint';
+              break;
+            case 'xls':
+            case 'xlsx':
+              type = 'excel';
+              break;
+            case 'pdf':
+            case 'ofd':
+              type = 'pdf';
+              break;
+            case 'zip':
+            case 'rar':
+            case 'gz':
+              type = 'zip';
+              break;
+
             case 'html':
+            case 'ejs':
               type = 'html';
+              break;
+            case 'xml':
+            case 'iml':
+              type = 'xml';
               break;
             case 'css':
             case 'less':
               type = 'css';
               break;
+            case 'scss':
+              type = 'sass';
+              break;
             case 'js':
-            case 'jsx':
               type = 'js';
               break;
+            case 'ts':
+              type = 'ts';
+              break;
+            case 'jsx':
+            case 'tsx':
+              type = 'jsx';
+              break;
+
             case 'json':
               type = 'json';
               break;
             case 'md':
               type = 'md';
               break;
+
             case 'png':
             case 'jpg':
+            case 'jpeg':
+            case 'svg':
+            case 'ico':
               type = 'png';
               break;
             case 'gif':
               type = 'gif';
               break;
-            case 'pdf':
-            case 'ofd':
-              type = 'pdf';
+            case 'ttf':
+            case 'otf':
+            case 'eot':
+            case 'woff':
+            case 'woff2':
+              type = 'font';
+              break;
+            case 'swf':
+              type = 'video';
+              break;
+          }
+          if (name.includes('webpack') && name.includes('config')) {
+            type = 'webpack';
+          } else if (name.includes('eslint')) {
+            type = 'eslint';
+          }
+          switch (name) {
+            case 'package.json':
+            case 'package-lock.json':
+              type = 'npm';
+              break;
+            case '.babelrc':
+              type = 'babel';
+              break;
+            case '.gitignore':
+              type = 'git';
               break;
           }
           return type;
@@ -207,12 +295,12 @@
         },
         getFileSize(size) {
           if (size < 1024) {
-            return `${size} B`;
+            return `${size.toLocaleString()} B`;
           }
           if (size < 1024 * 1024) {
-            return `${Math.floor(size / 1024)} KB`;
+            return `${Math.floor(size / 1024).toLocaleString()} KB`;
           }
-          return `${Math.floor(size / (1024 * 1024))} MB`;
+          return `${Math.floor(size / (1024 * 1024)).toLocaleString()} MB`;
         }
       }
     });
