@@ -79,6 +79,7 @@
             <span v-show="fileName">名称：{{ fileName }}</span>
             <span v-show="fileSize">大小：{{ fileSize }}</span>
             <span v-show="fileLastModifiedDate">修改日期：{{ fileLastModifiedDate }}</span>
+            <span v-show="filePath">位置：{{ filePath }}</span>
           </span>
         </v-toolbar-title>
       </v-footer>
@@ -92,6 +93,7 @@
       el: '#app',
       vuetify: new Vuetify(),
       data: {
+        rootHandle: null,
         treeVisible: false,
         btnLoading: false,
         treeItems: [],
@@ -132,13 +134,15 @@
         objectType: '',
         fileName: '',
         fileSize: '',
-        fileLastModifiedDate: ''
+        fileLastModifiedDate: '',
+        filePath: ''
       },
       methods: {
         btnClickHandler() {
           this.btnLoading = true;
           showDirectoryPicker()
             .then(handle => {
+              this.rootHandle = handle;
               this.treeItems.push({
                 id: Math.random(),
                 name: handle.name,
@@ -290,13 +294,16 @@
           this.cleanObjectCache();
           const firstItem = selectedItems[0];
           if (!firstItem) return;
-          const file = await firstItem.handle.getFile();
+          const { handle } = firstItem;
+          const file = await handle.getFile();
+          const filePathArr = await this.rootHandle.resolve(handle);
           const { type, name, size, lastModifiedDate } = file;
           this.objectURL = URL.createObjectURL(file);
           this.objectType = type;
           this.fileName = name;
           this.fileSize = this.getFileSize(size);
           this.fileLastModifiedDate = lastModifiedDate.toLocaleString();
+          this.filePath = `${this.rootHandle.name}/${filePathArr.join('/')}`;
         },
         cleanObjectCache() {
           URL.revokeObjectURL(this.objectURL);
@@ -305,6 +312,7 @@
           this.fileName = '';
           this.fileSize = '';
           this.fileLastModifiedDate = '';
+          this.filePath = '';
         },
         getFileSize(size) {
           if (size < 1024) {
